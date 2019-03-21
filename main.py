@@ -24,6 +24,7 @@ flags.DEFINE_string("checkpoint_dir", "checkpoints", "checkpoint directory [chec
 flags.DEFINE_string("data_name", "ptb", "data set name [ptb]")
 flags.DEFINE_boolean("is_test", False, "True for testing, False for Training [False]")
 flags.DEFINE_boolean("show", False, "print progress [False]")
+flags.DEFINE_boolean("nwords", 0, "nwords")
 
 FLAGS = flags.FLAGS
 
@@ -39,6 +40,8 @@ def main(_):
     test_data = read_data('%s/%s.test.txt' % (FLAGS.data_dir, FLAGS.data_name), count, word2idx)
 
     idx2word = dict(zip(word2idx.values(), word2idx.keys()))
+
+
     FLAGS.nwords = len(word2idx)
 
     pp.pprint(flags.FLAGS.__flags)

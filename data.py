@@ -1,12 +1,13 @@
 import os
 from collections import Counter
 
+
 def read_data(fname, count, word2idx):
     if os.path.isfile(fname):
         with open(fname) as f:
             lines = f.readlines()
     else:
-        raise("[!] Data %s not found" % fname)
+        raise ("[!] Data %s not found" % fname)
 
     words = []
     for line in lines:
