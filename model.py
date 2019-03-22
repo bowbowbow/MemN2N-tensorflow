@@ -87,7 +87,7 @@ class MemN2N(object):
             Aout = tf.matmul(self.hid3dim, Ain, adjoint_b=True)
             # Aout2dim: 128x100, mem_size: 100
             Aout2dim = tf.reshape(Aout, [-1, self.mem_size])
-            # 128x100
+            # P: 128x100
             P = tf.nn.softmax(Aout2dim)
             # probs3dim: 128x1x100
             probs3dim = tf.reshape(P, [-1, 1, self.mem_size])
@@ -125,6 +125,9 @@ class MemN2N(object):
         # loss shape: (128,)
         self.loss = tf.nn.softmax_cross_entropy_with_logits(logits=z, labels=self.target)
 
+        self.cost = tf.reduce_mean(self.loss)
+        tf.summary.scalar('cost', self.cost)
+
         self.lr = tf.Variable(self.current_lr)
         self.opt = tf.train.GradientDescentOptimizer(self.lr)
 
@@ -149,6 +152,7 @@ class MemN2N(object):
         context = np.ndarray([self.batch_size, self.mem_size])
 
         x.fill(self.init_hid)
+        # set value by column
         for t in xrange(self.mem_size):
             time[:, t].fill(t)
 
@@ -172,7 +176,15 @@ class MemN2N(object):
                                                    self.time: time,
                                                    self.target: target,
                                                    self.context: context})
+
             cost += np.sum(loss)
+
+            summary = self.sess.run(self.merged, feed_dict={
+                self.input: x,
+                self.time: time,
+                self.target: target,
+                self.context: context})
+            self.writer.add_summary(summary, global_step=self.sess.run(self.global_step))
 
         if self.show: bar.finish()
         return cost / N / self.batch_size
@@ -216,6 +228,9 @@ class MemN2N(object):
         return cost / N / self.batch_size
 
     def run(self, train_data, test_data):
+        self.writer = tf.summary.FileWriter(self.checkpoint_dir, self.sess.graph)
+        self.merged = tf.summary.merge_all()
+
         if not self.is_test:
             for idx in xrange(self.nepoch):
                 train_loss = np.sum(self.train(train_data))
