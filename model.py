@@ -64,7 +64,7 @@ class MemN2N(object):
         # A: 10000x150, context: 128x100
         # Ain_c: 128x100x150
         Ain_c = tf.nn.embedding_lookup(self.A, self.context)
-        # A: 10000x150, context: ?x100
+        # A: 10000x150, time: ?x100
         # Ain_t: ?x100x150
         Ain_t = tf.nn.embedding_lookup(self.T_A, self.time)
         # Ain: 128x100x150
@@ -72,18 +72,18 @@ class MemN2N(object):
 
         # c_i = sum B_ij * u + T_B_i
         # B: 10000x150, context: 128x100
-        # Bin_c: 128x100x50
+        # Bin_c: 128x100x150
         Bin_c = tf.nn.embedding_lookup(self.B, self.context)
         # T_B: 100x150, time: ?x100
-        # Bin_c: 128x100x50
+        # Bin_c: 128x100x150
         Bin_t = tf.nn.embedding_lookup(self.T_B, self.time)
-        # Bin: 128x100x50
+        # Bin: 128x100x150
         Bin = tf.add(Bin_c, Bin_t)
 
         for h in xrange(self.nhop):
             # hid3dim: ?x1x150
             self.hid3dim = tf.reshape(self.hid[-1], [-1, 1, self.edim])
-            # Aout: 128x1x100
+            # Aout: 128x1x100m, Ain: 128x100x150
             Aout = tf.matmul(self.hid3dim, Ain, adjoint_b=True)
             # Aout2dim: 128x100, mem_size: 100
             Aout2dim = tf.reshape(Aout, [-1, self.mem_size])
@@ -254,7 +254,7 @@ class MemN2N(object):
                     self.lr.assign(self.current_lr).eval()
                 if self.current_lr < 1e-5: break
 
-                if idx % 10 == 0:
+                if idx % 2 == 0:
                     self.saver.save(self.sess,
                                     os.path.join(self.checkpoint_dir, "MemN2N.model"),
                                     global_step=self.step.astype(int))
